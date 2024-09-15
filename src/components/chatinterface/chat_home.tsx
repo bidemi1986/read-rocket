@@ -34,50 +34,8 @@ interface Channel {
   name: string
   ownerId: string
   members: string[]
-}
-
-// function ChannelList({ channels, selectedChannelId, onChannelSelect, onChannelCreate }) {
-//   const [newChannelName, setNewChannelName] = useState('')
-
-//   const handleCreateChannel = () => {
-//     if (newChannelName) {
-//       onChannelCreate(newChannelName, [])
-//       setNewChannelName('')
-//     }
-//   }
-
-//   return (
-//     <ScrollArea className="h-[calc(100vh-4rem)]">
-//       <div className="space-y-2 p-2">
-//         {channels.map((channel) => (
-//           <Button
-//             key={channel.id}
-//             variant={channel.id === selectedChannelId ? "secondary" : "ghost"}
-//             className="w-full justify-start"
-//             onClick={() => onChannelSelect(channel.id)}
-//           >
-//             <MessageSquare className="mr-2 h-4 w-4" />
-//             {channel.name}
-//           </Button>
-//         ))}
-//       </div>
-//       <div className="p-2">
-//         <Input
-//           placeholder="New channel name"
-//           value={newChannelName}
-//           onChange={(e) => setNewChannelName(e.target.value)}
-//           className="mb-2"
-//         />
-//         <Button onClick={handleCreateChannel} className="w-full">
-//           Create Channel
-//         </Button>
-//       </div>
-//     </ScrollArea>
-//   )
-// }
- 
-
-export default function ChatApp() {
+} 
+export default function ChatApp({roomid, channelid}) {
   const [channels, setChannels] = useState<Channel[]>([])
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
   const [isChatWindowVisible, setIsChatWindowVisible] = useState(false)
@@ -98,7 +56,7 @@ export default function ChatApp() {
       const userData = {
         email: user.email,
         lastActiveTimestamp: user.metadata.lastSignInTime,
-        uid: user.uid,
+        userId: user.uid,
       }
 
       const userRef = doc(db, 'users', user.uid)

@@ -13,3 +13,6 @@ if (!admin.apps.length) {
 export const verifyIdToken = (token: string) => {
   return admin.auth().verifyIdToken(token);
 };
+const db = admin.firestore(); // Access Firestore
+
+export { db, admin }; // Export both Firestore and the admin instance

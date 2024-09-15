@@ -4,7 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes"; // Import ThemeProvider
 import { AuthProvider } from "@/context/authcontext";
-import ClientLayout from '@/components/ClientLayout'; // Import the client-side layout
+import ClientLayout from "@/components/client-layout";
+import ClientAuthLayout from "@/components/client-auth-layout"; 
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -27,7 +28,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
- 
+
+
   return (
     <html lang="en">
       <body
@@ -38,7 +40,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class"> 
           <Toaster />
           <ClientLayout>
-            {children}
+             {/* <ClientAuthLayout>  */}
+              {children}
+            {/* </ClientAuthLayout>   */}
           </ClientLayout>
         </ThemeProvider>
         </AuthProvider>

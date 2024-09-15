@@ -1,6 +1,6 @@
 // src/app/@me/rooms/page.tsx
 'use client'
-
+import {useEffect} from "react"
 import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,118 +17,112 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-// Mock data for study rooms
-const studyRooms = [
-  {
-    id: 1,
-    name: "Physics 101",
-    category: "Science",
-    recentMessage: "Can someone explain quantum entanglement?",
-    readers: 5,
-    lastActive: "2023-06-15T10:30:00Z"
-  },
-  {
-    id: 2,
-    name: "World History",
-    category: "History",
-    recentMessage: "Discussing the impact of the Industrial Revolution",
-    readers: 3,
-    lastActive: "2023-06-15T09:45:00Z"
-  },
-  {
-    id: 3,
-    name: "Calculus Study Group",
-    category: "Math",
-    recentMessage: "Working on integration by parts problems",
-    readers: 7,
-    lastActive: "2023-06-14T14:20:00Z"
-  },
-  {
-    id: 4,
-    name: "Literature Circle",
-    category: "English",
-    recentMessage: "Analyzing themes in '1984' by George Orwell",
-    readers: 4,
-    lastActive: "2023-06-15T08:15:00Z"
-  },
-  {
-    id: 5,
-    name: "Computer Science Fundamentals",
-    category: "Science",
-    recentMessage: "Discussing Big O notation and algorithm efficiency",
-    readers: 6,
-    lastActive: "2023-06-15T10:05:00Z"
-  },
-  {
-    id: 6,
-    name: "Art History",
-    category: "History",
-    recentMessage: "Exploring the Renaissance period",
-    readers: 2,
-    lastActive: "2023-06-13T16:40:00Z"
-  },
-  {
-    id: 7,
-    name: "Biology Study Group",
-    category: "Science",
-    recentMessage: "Reviewing cellular respiration processes",
-    readers: 5,
-    lastActive: "2023-06-15T09:30:00Z"
-  },
-  {
-    id: 8,
-    name: "Statistics for Data Science",
-    category: "Math",
-    recentMessage: "Discussing hypothesis testing methods",
-    readers: 8,
-    lastActive: "2023-06-15T10:29:00Z"
-  }
-]
-
-const categories = ["All", ...new Set(studyRooms.map(room => room.category))]
+import { useAuth } from '@/context/authcontext' 
+import { RoomData } from "@/types/room-model"
 
 export default function StudyRoomsList() {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [timeFilter, setTimeFilter] = useState("all")
-  const [newRoomName, setNewRoomName] = useState("")
-  const [newRoomCategory, setNewRoomCategory] = useState("")
+  const [newRoomName, setNewRoomName] = useState('');
+  const [newRoomDescription, setNewRoomDescription] = useState('');
+  const [rooms, setRooms] = useState<any[]>([]); // Store fetched rooms
+  const [newRoomVisibility, setNewRoomVisibility] = useState<'public' | 'private' | 'unlisted'>('public');
+  const [error, setError] = useState('');
+  const { user } = useAuth(); // Get the authenticated user
 
-  const filterRooms = (rooms: any[]) => {
-    return rooms.filter((room: { category: string; name: string; recentMessage: string; lastActive: string | number | Date }) => {
-      const categoryMatch = selectedCategory === "All" || room.category === selectedCategory
-      const searchMatch = room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          room.recentMessage.toLowerCase().includes(searchQuery.toLowerCase())
-      const timeMatch = (() => {
-        const now = new Date()
-        const lastActive = new Date(room.lastActive)
-        const hoursDiff = (now.getTime() - lastActive.getTime()) / (1000 * 3600)
-        switch (timeFilter) {
-          case 'last24h': return hoursDiff <= 24
-          case 'last7d': return hoursDiff <= 168
-          case 'last30d': return hoursDiff <= 720
-          default: return true
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (user) {
+        try {
+          const response = await fetch(`/api/getRooms?uid=${user.uid}`);
+          const data = await response.json();
+          setRooms(data.rooms); // Store the rooms in the state
+        } catch (error) {
+          console.error('Error fetching rooms:', error);
         }
-      })()
-      return categoryMatch && searchMatch && timeMatch
-    })
-  }
+      }
+    };
 
-  const filteredRooms = filterRooms(studyRooms)
+    fetchRooms();
+  }, [user]);
 
-  const handleCreateRoom = () => {
-    // Here you would typically make an API call to create a new room
-    console.log("Creating new room:", { name: newRoomName, category: newRoomCategory })
-    // Reset the form
-    setNewRoomName("")
-    setNewRoomCategory("")
-  }
+  // Extract categories from fetched rooms
+  const categories = ['All', ...new Set(rooms.map((room) => room.category))];
 
-  const formatLastActive = (dateString: string | number | Date) => {
-    const date = new Date(dateString)
-    return date.toLocaleString()
-  }
+  const filterRooms = (rooms: RoomData[]) => {
+    return rooms.filter((room) => {
+      // Category filtering
+      const categoryMatch = selectedCategory === "All" || room.tags.includes(selectedCategory);
+  
+      // Search filtering
+      const searchMatch = room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          room.description.toLowerCase().includes(searchQuery.toLowerCase());
+  
+      // Time filtering based on the last active time
+      const now = new Date();
+      const lastActive = new Date(room.lastActive * 1000); // Manually convert to Date
+      const hoursDiff = (now.getTime() - lastActive.getTime()) / (1000 * 3600);
+  
+      const timeMatch = (() => {
+        switch (timeFilter) {
+          case 'last24h': return hoursDiff <= 24;
+          case 'last7d': return hoursDiff <= 168; // 7 days * 24 hours
+          case 'last30d': return hoursDiff <= 720; // 30 days * 24 hours
+          default: return true;
+        }
+      })();
+  
+      return categoryMatch && searchMatch && timeMatch;
+    });
+  };
+  
+
+  const filteredRooms = filterRooms(rooms)
+
+  const handleCreateRoom = async () => {
+    if (!newRoomName.trim()) {
+      setError('Room name cannot be empty');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/createRoom', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newRoomName,
+          ownerId: user?.uid,
+          visibility: newRoomVisibility,
+          members: [user?.uid],
+          description: newRoomDescription,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create room');
+      
+      const { roomId } = await response.json();
+      console.log(`Room created with ID: ${roomId}`);
+      
+      setNewRoomName('');
+      setNewRoomDescription('');
+      setError('');
+    } catch (error) {
+      setError('Failed to create room');
+      console.error(error);
+    }
+  };
+
+  const formatLastActive = (lastActive: { _seconds: number, _nanoseconds: number }) => {
+    if(!lastActive) return "Invalid Date"
+    const milliseconds = lastActive._seconds * 1000 + lastActive._nanoseconds / 1000000;
+    const date = new Date(milliseconds);
+  
+    return date.toLocaleString(); // Convert the date to a human-readable string
+  };
+  
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -156,49 +150,59 @@ export default function StudyRoomsList() {
           </SelectContent>
         </Select>
         <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Room
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Study Room</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={newRoomName}
-                  onChange={(e) => setNewRoomName(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">
-                  Category
-                </Label>
-                <Select value={newRoomCategory} onValueChange={setNewRoomCategory}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.filter(cat => cat !== "All").map(category => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Room
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Room</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Room Name
+              </Label>
+              <Input
+                id="name"
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                className="col-span-3"
+              />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="description"
+                value={newRoomDescription}
+                onChange={(e) => setNewRoomDescription(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="visibility" className="text-right">
+                Visibility
+              </Label>
+              <Select value={newRoomVisibility} onValueChange={setNewRoomVisibility}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select visibility" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                  <SelectItem value="unlisted">Unlisted</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
             <Button onClick={handleCreateRoom}>Create Room</Button>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
 
       <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
@@ -216,7 +220,7 @@ export default function StudyRoomsList() {
 
       <ScrollArea className="w-full h-[600px]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-          {filteredRooms.map((room: { id: Key | null | undefined; name: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; recentMessage: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; readers: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; lastActive: any }) => (
+          {filteredRooms.map((room) => (
             <motion.div
               key={room.id}
               initial={{ opacity: 0, y: 20 }}
@@ -241,11 +245,11 @@ export default function StudyRoomsList() {
                   </DropdownMenu>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-muted-foreground mb-2">{room.recentMessage}</div>
+                  <div className="text-sm text-muted-foreground mb-2">{room.latestMessage}</div>
                   <div className="flex justify-between items-center text-xs text-muted-foreground">
                     <span className="flex items-center">
                       <Users className="h-4 w-4 mr-1" />
-                      {room.readers} readers
+                      {room.members.length} readers
                     </span>
                     <span className="flex items-center">
                       <MessageSquare className="h-4 w-4 mr-1" />

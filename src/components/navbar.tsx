@@ -9,11 +9,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useRouter } from 'next/navigation';
+import nookies from 'nookies';
 
 export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+  const [error, setError] = useState('');
+  const router = useRouter();
 
+  const Logout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        router.push('/login'); // Redirect to rooms on success
+        nookies.destroy(null, 'token');
+        nookies.set(null, 'token', '', { path: '/' }); // Set empty token
+        // window.location.href = '/login'; // Redirect to login
+      } else {
+        setError('Login failed');
+      }
+    } catch (error) {
+      setError('Login failed');
+    }
+  };
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -82,7 +107,7 @@ export default function Navbar() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={Logout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="ml-4 md:hidden">

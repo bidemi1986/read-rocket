@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
 import { FaGoogle } from 'react-icons/fa';
 
 export default function LoginPage() {
@@ -17,15 +16,20 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // Function to send the token to the API for secure cookie storage
-  const sendTokenToBackend = async (token: string) => {
+  // Handle email/password login
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken(); // Get Firebase token
+
+      // Redirect to your server-side login endpoint
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ token }),
       });
 
       if (response.ok) {
@@ -34,29 +38,33 @@ export default function LoginPage() {
         setError('Login failed');
       }
     } catch (error) {
-      setError('Login failed');
-    }
-  };
-
-  // Handle email/password login
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken(); // Get Firebase token
-      await sendTokenToBackend(token); // Send the token to the backend
-    } catch (error) {
+      console.error('Error during login:', error);
       setError('Invalid email or password');
     }
   };
 
-  // Handle Google sign-in client-side
+  // Handle Google sign-in
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken(); // Get Firebase token
-      await sendTokenToBackend(token); // Send the token to the backend
+
+      // Redirect to your server-side login endpoint
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        router.push('/me/rooms'); // Redirect to rooms on success
+      } else {
+        setError('Google login failed');
+      }
     } catch (error) {
+      console.error('Google sign-in error:', error);
       setError('Google sign-in failed');
     }
   };
@@ -99,8 +107,9 @@ export default function LoginPage() {
           </form>
           <div className="mt-4">
             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-              <FaGoogle/><span className="mr-2"/>
-               Sign in with Google
+              <FaGoogle />
+              <span className="mr-2" />
+              Sign in with Google
             </Button>
           </div>
         </CardContent>
