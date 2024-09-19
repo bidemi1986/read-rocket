@@ -1,4 +1,4 @@
-// src/app/@me/room/[roomid]/c/[channelid]/page.tsx and similar files
+// src/app/me/room/[roomid]/c/[channelid]/page.tsx and similar files
 "use client" 
 import { ChatApp } from '@/components';
 

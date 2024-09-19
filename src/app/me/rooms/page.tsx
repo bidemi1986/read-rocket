@@ -1,7 +1,10 @@
 // src/app/@me/rooms/page.tsx
 'use client'
-import {useEffect} from "react"
-import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from 'react'
+import {useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { db, auth } from '@/apis/firebase'
+import { collection, query, where, addDoc, onSnapshot, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'
+import { onAuthStateChanged, User } from 'firebase/auth'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,30 +33,50 @@ export default function StudyRoomsList() {
   const [newRoomVisibility, setNewRoomVisibility] = useState<'public' | 'private' | 'unlisted'>('public');
   const [error, setError] = useState('');
   const { user } = useAuth(); // Get the authenticated user
+  const router = useRouter()
+  // useEffect(() => {
+  //   const fetchRooms = async () => {
+  //     if (user) {
+  //       try {
+  //         const response = await fetch(`/api/getRooms?uid=${user.uid}`);
+  //         const data = await response.json();
+  //         setRooms(data.rooms); // Store the rooms in the state
+  //       } catch (error) {
+  //         console.error('Error fetching rooms:', error);
+  //       }
+  //     }
+  //   };
 
+  //   fetchRooms();
+  // }, [user]);
+  const handleClick =(id: string)=>{
+    router.push(`/me/r/${id}`)
+  }
   useEffect(() => {
-    const fetchRooms = async () => {
-      if (user) {
-        try {
-          const response = await fetch(`/api/getRooms?uid=${user.uid}`);
-          const data = await response.json();
-          setRooms(data.rooms); // Store the rooms in the state
-        } catch (error) {
-          console.error('Error fetching rooms:', error);
-        }
-      }
-    };
+    if (user) {
+      const roomsRef = collection(db, 'rooms')
+      const q = query(roomsRef, where('ownerId', '==', user?.uid))
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const fetchedRooms = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        setRooms(fetchedRooms)
+        // if (!selectedChannelId && fetchedChannels.length > 0) {
+        //   setSelectedChannelId(fetchedChannels[0].id)
+        // }
+      })
 
-    fetchRooms();
-  }, [user]);
-
+      return () => unsubscribe()
+    }
+  }, [user])
   // Extract categories from fetched rooms
   const categories = ['All', ...new Set(rooms.map((room) => room.category))];
 
   const filterRooms = (rooms: RoomData[]) => {
     return rooms.filter((room) => {
       // Category filtering
-      const categoryMatch = selectedCategory === "All" || room.tags.includes(selectedCategory);
+      const categoryMatch = selectedCategory === "All" || room.tags.includes(selectedCategory) || room.category === selectedCategory;
   
       // Search filtering
       const searchMatch = room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -227,7 +250,7 @@ export default function StudyRoomsList() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Card>
+              <Card onClick={()=>handleClick(room.id)}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{room.name}</CardTitle>
                   <DropdownMenu>
