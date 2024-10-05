@@ -31,8 +31,8 @@ export default function LandingPage() {
           </Link>
         </nav>
       </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-r from-purple-500 to-blue-600">
+      <main className="flex flex-col items-center w-full">
+        <section className="w-full md:flex justify-center py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-r from-purple-500 to-blue-600">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col-reverse md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-8">
               <div className="flex flex-col items-start space-y-4 text-white">
@@ -58,8 +58,8 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.4 }}
                 >
-                  <Button variant="secondary">Get Started</Button>
-                  <Button variant="outline">Learn More</Button>
+                  <Button variant="secondary" size={"lg"}>Get Started</Button>
+                  <Button variant="outline" size={"lg"}>Learn More</Button>
                 </motion.div>
               </div>
               <motion.div
@@ -78,9 +78,9 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
+        <section id="features" className="w-full md:flex justify-center py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
           <div className="container px-4 md:px-6">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-8">Features</h2>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-16">Features</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
                 <Card>
@@ -112,9 +112,9 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
+        <section id="pricing" className="w-full md:flex justify-center py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-8">Pricing</h2>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12">Pricing</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {["Basic", "Pro", "Enterprise"].map((plan, index) => (
                 <motion.div key={plan} whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
@@ -142,7 +142,7 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        <section id="discord" className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
+        <section id="discord" className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800 flex justify-center">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Join Our Community</h2>
