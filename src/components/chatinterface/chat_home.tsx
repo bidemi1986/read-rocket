@@ -116,6 +116,9 @@ export default function ChatApp({ roomid, channelid }: any) {
   
   // Create default channel
   const createDefaultChannel = async (roomId: string, ownerId: string) => {
+    if(!roomid || !ownerId) {
+      router.push('/login')
+    } 
     const newChannel = {
       name: "General",
       createdAt: Timestamp.now(),
@@ -218,8 +221,7 @@ export default function ChatApp({ roomid, channelid }: any) {
         channels={channels}
         roomData={room}
         selectedChannelId={selectedChannelId}
-        onChannelSelect={handleChannelSelect}
-        onChannelCreate={handleChannelCreate}
+        onChannelSelect={handleChannelSelect} 
       />
       <div className="flex flex-row h-full">
       <ScrollArea

@@ -1,9 +1,14 @@
-// src/pages/api/logout.ts
-import { NextApiRequest, NextApiResponse } from 'next';
-import nookies from 'nookies';
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Remove the token by clearing the cookie
-  nookies.destroy({ res }, 'token', { path: '/' });
-  res.status(200).json({ message: 'Logged out successfully' });
+export async function POST(request: NextRequest) {
+  // Remove the value and expire the cookie
+  const options = {
+    name: "session",
+    value: "",
+    maxAge: -1,
+  };
+
+  cookies().set(options);
+  return NextResponse.json({}, { status: 200 });
 }

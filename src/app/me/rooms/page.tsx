@@ -148,7 +148,7 @@ export default function StudyRoomsList() {
   
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto px-8 py-4 space-y-6 bg-gray-100 dark:bg-black">
       <h1 className="text-2xl font-bold mb-4">Study Rooms</h1>
       
       <div className="flex flex-wrap gap-4 items-center justify-between">

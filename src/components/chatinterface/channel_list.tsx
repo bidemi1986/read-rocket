@@ -25,7 +25,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { ChevronRight, ChevronLeft, Upload, Link, Plus, Send, MessageSquare } from 'lucide-react'
-export function ChannelList({ channels, selectedChannelId, onChannelSelect, onChannelCreate }: {
+export function ChannelList({ channels, selectedChannelId, onChannelSelect }: {
   channels: Channel[];
   selectedChannelId: string | null;
   onChannelSelect: (id: string) => void;
@@ -33,13 +33,6 @@ export function ChannelList({ channels, selectedChannelId, onChannelSelect, onCh
 }) {
   const [newChannelName, setNewChannelName] = useState('');
   console.log('...channels...',channels);
-
-  const handleCreateChannel = () => {
-    if (newChannelName.trim()) {
-      onChannelCreate(newChannelName.trim(), []);
-      setNewChannelName('');
-    }
-  };
 
   return (
     <ScrollArea className="w-[100%]">

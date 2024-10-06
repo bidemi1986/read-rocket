@@ -106,7 +106,7 @@ export default function ResearchChatInterface() {
   }, [messages])
 
   return (
-    <div className="flex flex-col h-screen bg-blue-50 dark:bg-gray-900">
+    <div className="w-[100%] flex flex-col h-screen bg-blue-50 dark:bg-gray-900">
       <div className="flex items-center border-b p-2">
         <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           {isMenuOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}

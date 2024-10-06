@@ -1,69 +1,63 @@
+// src/pages/api/login.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from 'firebase-admin/auth';
-import { db } from '@/lib/firebaseAdmin'; // Firestore instance
-import { clientConfig, serverConfig } from '@/config'; // Your Firebase config
-import { Timestamp } from 'firebase-admin/firestore'; // Firestore admin timestamp
-import nookies from 'nookies'; // For setting cookies
+import { auth } from '@/lib/firebase-admin-config'; // Ensure Firebase Admin is initialized
+import nookies from 'nookies';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { token } = req.body;
+  if (req.method === 'POST') {
+    try {
+      const authorization = req.headers.authorization;
 
+      if (authorization?.startsWith('Bearer ')) {
+        const idToken = authorization.split('Bearer ')[1];
+        const decodedToken = await auth.verifyIdToken(idToken);
+
+        if (decodedToken) {
+          const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+          const sessionCookie = await auth.createSessionCookie(idToken, {
+            expiresIn,
+          });
+
+          // Set the session cookie using nookies
+          nookies.set({ res }, 'session', sessionCookie, {
+            maxAge: expiresIn / 1000,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+          });
+
+          return res.status(200).json({ message: 'Logged in successfully' });
+        }
+      }
+
+      return res.status(401).json({ error: 'Unauthorized' });
+    } catch (error) {
+      console.error('Error during login:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  } else {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+}
+
+export async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
-    // Verify the token using Firebase Admin SDK
-    const decodedToken = await getAuth().verifyIdToken(token, true); // Enforce token expiration check
-    const { uid, email, firebase } = decodedToken;
-    console.log("{ uid, email, firebase } from token ", { uid, email, firebase });
+    const cookies = nookies.get({ req });
+    const session = cookies.session || '';
 
-    const googleId = firebase?.identities?.['google.com']?.[0] || '';
-
-    // Set the Firebase token in an HTTP-only cookie
-    nookies.set({ res }, serverConfig.cookieName, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',  // Set cookie for all paths
-      maxAge: 60 * 60, // Set token expiration to 1 hour (matching Firebase token)
-    });
-
-    // Firestore logic with Firebase Admin SDK
-    const userRef = db.collection('users').doc(uid);
-    const docSnapshot = await userRef.get();
-
-    // Define default user data
-    const userData = {
-      email: email || '',
-      googleId: googleId,
-      isAdmin: false,
-      lastActiveTimestamp: Timestamp.now(),
-      createdAt: Timestamp.now(),
-      username: email || '',
-      credits: 3,
-      userId: uid,
-    };
-
-    if (docSnapshot.exists) {
-      const existingUserData = docSnapshot.data();
-      const updatedUserData = {
-        ...userData,
-        ...existingUserData, // Merge existing data, overriding defaults
-        createdAt: existingUserData?.createdAt || Timestamp.now(), // Preserve original createdAt
-      };
-      // Update Firestore user record
-      await userRef.set(updatedUserData, { merge: true });
-    } else {
-      // Create new user record if not found
-      await userRef.set(userData);
+    if (!session) {
+      return res.status(401).json({ isLogged: false });
     }
 
-    // Respond with a success message
-    return res.status(200).json({ message: 'Login successful and user data updated' });
+    // Validate the session cookie using Firebase Admin
+    const decodedClaims = await auth.verifySessionCookie(session, true);
+
+    if (!decodedClaims) {
+      return res.status(401).json({ isLogged: false });
+    }
+
+    return res.status(200).json({ isLogged: true });
   } catch (error) {
-    console.error('Token verification or user record handling failed:', error);
-
-    // Handle expired tokens with specific messaging
-    if (error.code === 'auth/id-token-expired') {
-      return res.status(401).json({ error: 'Token expired, please login again.' });
-    }
-
-    return res.status(401).json({ error: 'Invalid token or user record handling failed' });
+    return res.status(401).json({ isLogged: false });
   }
 }

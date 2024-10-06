@@ -48,11 +48,11 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700">
+    <nav className="bg-gray-100 dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <span className="text-2xl font-semibold text-gray-900 dark:text-white">Logo</span>
+            <span className="text-xl font-semibold text-gray-900 dark:text-white">[Read-Rocket]</span>
           </div>
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">

@@ -14,6 +14,9 @@ export type Message = {
 export type Channel = {
   id: string;
   name: string;
-  created: Timestamp;   
+  createdAt: Timestamp;   
   members: string[]
+  color:  string;
+  ownerId: string;
+  roomId: string
 };
